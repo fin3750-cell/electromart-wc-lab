@@ -46,6 +46,74 @@
       <p id="cash-check-warning" class="warning" hidden></p>
     </section>
 
+    <section id="levers-section" hidden>
+      <h2>Try the levers</h2>
+      <p class="note">Move a slider, or type a number of days in its box. Revenue and COGS stay at their Before values. Everything is compared with the Before balance sheet.</p>
+
+      <div class="buttons">
+        <button type="button" id="set-before" aria-pressed="false">Set to Before</button>
+        <button type="button" id="set-after" aria-pressed="false">Set to After</button>
+      </div>
+      <p id="lever-status" class="note" aria-live="polite"></p>
+
+      <div class="slider">
+        <label for="dio-range"><span class="label">DIO</span><span class="desc">Days inventory outstanding</span></label>
+        <div class="slider-row">
+          <input type="range" id="dio-range" min="0" step="any">
+          <input type="number" id="dio-number" min="0" step="any" inputmode="decimal" aria-label="DIO in days">
+        </div>
+      </div>
+      <div class="slider">
+        <label for="dso-range"><span class="label">DSO</span><span class="desc">Days sales outstanding</span></label>
+        <div class="slider-row">
+          <input type="range" id="dso-range" min="0" step="any">
+          <input type="number" id="dso-number" min="0" step="any" inputmode="decimal" aria-label="DSO in days">
+        </div>
+      </div>
+      <div class="slider">
+        <label for="dpo-range"><span class="label">DPO</span><span class="desc">Days payables outstanding</span></label>
+        <div class="slider-row">
+          <input type="range" id="dpo-range" min="0" step="any">
+          <input type="number" id="dpo-number" min="0" step="any" inputmode="decimal" aria-label="DPO in days">
+        </div>
+      </div>
+
+      <h3>1. Cash conversion cycle</h3>
+      <table id="lever-days-table">
+        <thead>
+          <tr><th scope="col">Measure</th><th scope="col">Before</th><th scope="col">Levers</th><th scope="col">Change</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <h3>2–3. Balances these days imply, and cash freed</h3>
+      <table id="lever-cash-table">
+        <thead>
+          <tr><th scope="col">Line</th><th scope="col">Before</th><th scope="col">Levers</th><th scope="col">Cash freed</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <ul id="lever-cash-math" class="math"></ul>
+
+      <h3>4. Interest saved each year</h3>
+      <p class="note">Assumes every freed dollar pays down the bank line. In the case's own After balance sheet, part of the freed cash was kept as cash instead.</p>
+      <table id="lever-interest-table">
+        <tbody></tbody>
+      </table>
+      <ul id="lever-interest-math" class="math"></ul>
+      <p id="lever-interest-warning" class="warning" hidden></p>
+
+      <h3 id="supplier-heading">5. Supplier terms</h3>
+      <table id="lever-supplier-table">
+        <thead>
+          <tr><th scope="col">Measure</th><th scope="col">Before</th><th scope="col">Levers</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <ul id="lever-supplier-math" class="math"></ul>
+      <p class="note">The cost of skipping the discount is a nominal annual rate: the price of the extra days of supplier credit, stated as a yearly interest rate.</p>
+    </section>
+
     <section id="inputs-section" hidden>
       <h2>Inputs</h2>
       <p class="note">Read from <code>data/electromart.csv</code> and <code>data/assumptions.csv</code>.</p>
@@ -55,7 +123,7 @@
         </thead>
         <tbody></tbody>
       </table>
-      <p id="assumption-days" class="note"></p>
+      <ul id="assumption-list" class="note"></ul>
     </section>
   </main>
 

@@ -69,6 +69,7 @@
     inventory: 'asset',
     accounts_receivable: 'asset',
     accounts_payable: 'liability_or_equity',
+    notes_payable: 'liability_or_equity', // the bank line of credit
   };
 
   // Turn the rows of a statements CSV (section,item,before,after) into
@@ -109,7 +110,15 @@
       const name = (r.assumption || '').toLowerCase();
       if (name) a[name] = toNumber(r.value, name);
     });
-    if (!(a.days_in_year > 0)) throw new Error('assumptions.csv needs a days_in_year greater than zero.');
+    const need = (name, ok, rule) => {
+      if (a[name] === undefined) throw new Error(`assumptions.csv has no "${name}" line.`);
+      if (!ok(a[name])) throw new Error(`In assumptions.csv, ${name} ${rule}.`);
+    };
+    need('days_in_year', v => v > 0, 'must be greater than zero');
+    need('bank_rate', v => v >= 0, 'can\'t be negative');
+    need('supplier_discount', v => v >= 0 && v < 1, 'must be at least 0 and less than 1 (2% is 0.02)');
+    need('discount_days', v => v >= 0, 'can\'t be negative');
+    need('net_days', v => v >= a.discount_days, 'must be at least discount_days');
     return a;
   }
 
@@ -215,6 +224,79 @@
     return { daysInYear, before, after, levers, totalCashFreed };
   }
 
+  // ---------- The levers (sliders) ----------
+
+  // The balance a days figure implies: days × annual flow / days in year.
+  function impliedBalance(days, annualFlow, daysInYear) {
+    return days * annualFlow / daysInYear;
+  }
+
+  // How much of the cash freed goes to the bank line. Only the bank line's
+  // Before balance can be paid down. If cash freed is negative, ElectroMart
+  // borrows that much more, so this is negative too.
+  function bankLinePaydown(cashFreed, bankLineBefore) {
+    return cashFreed > 0 ? Math.min(cashFreed, bankLineBefore) : cashFreed;
+  }
+
+  // Interest saved each year = amount paid down on the bank line × bank rate.
+  // Negative means extra interest from borrowing more.
+  function interestSaved(cashFreed, bankLineBefore, bankRate) {
+    return bankLinePaydown(cashFreed, bankLineBefore) * bankRate;
+  }
+
+  // Days paid past the due date = DPO − net days, never less than zero.
+  function daysPastDue(dpoDays, netDays) {
+    return Math.max(0, dpoDays - netDays);
+  }
+
+  // If DPO is within the discount period, ElectroMart takes the discount.
+  function takesDiscount(dpoDays, discountDays) {
+    return dpoDays <= discountDays;
+  }
+
+  // Nominal annual cost of skipping the supplier discount:
+  //   d / (1 − d) × days in year / (days paid − discount days)
+  // where d is the discount (0.02 for 2%) and days paid is DPO.
+  // If ElectroMart takes the discount, nothing is skipped, so this returns 0.
+  function costOfSkippingDiscount(discount, dpoDays, discountDays, daysInYear) {
+    if (takesDiscount(dpoDays, discountDays)) return 0;
+    return discount / (1 - discount) * daysInYear / (dpoDays - discountDays);
+  }
+
+  // Everything the levers section shows for one set of days { dio, dso, dpo }.
+  // Revenue and COGS are held at their Before values. Cash freed compares the
+  // balances these days imply with the Before balance sheet.
+  function leverResults(lines, assumptions, days) {
+    const d = assumptions.days_in_year;
+    const revenue = lines.revenue.before;
+    const cogs = lines.cogs.before;
+
+    const balances = {
+      inventory: impliedBalance(days.dio, cogs, d),
+      receivables: impliedBalance(days.dso, revenue, d),
+      payables: impliedBalance(days.dpo, cogs, d),
+    };
+    const cashFreed = {
+      inventory: cashFreedFromBalances(lines.inventory.section, lines.inventory.before, balances.inventory),
+      receivables: cashFreedFromBalances(lines.accounts_receivable.section, lines.accounts_receivable.before, balances.receivables),
+      payables: cashFreedFromBalances(lines.accounts_payable.section, lines.accounts_payable.before, balances.payables),
+    };
+    cashFreed.total = cashFreed.inventory + cashFreed.receivables + cashFreed.payables;
+
+    const bankLineBefore = lines.notes_payable.before;
+    return {
+      ccc: cashConversionCycle(days.dio, days.dso, days.dpo),
+      balances,
+      cashFreed,
+      bankLineBefore,
+      bankLinePaydown: bankLinePaydown(cashFreed.total, bankLineBefore),
+      interestSaved: interestSaved(cashFreed.total, bankLineBefore, assumptions.bank_rate),
+      daysPastDue: daysPastDue(days.dpo, assumptions.net_days),
+      takesDiscount: takesDiscount(days.dpo, assumptions.discount_days),
+      discountCost: costOfSkippingDiscount(assumptions.supplier_discount, days.dpo, assumptions.discount_days, d),
+    };
+  }
+
   const CCC = {
     parseCsv,
     toNumber,
@@ -229,6 +311,13 @@
     cashFreedFromBalances,
     cashFreedFromDays,
     analyze,
+    impliedBalance,
+    bankLinePaydown,
+    interestSaved,
+    daysPastDue,
+    takesDiscount,
+    costOfSkippingDiscount,
+    leverResults,
   };
 
   // In Node, `require('./ccc.js')` returns CCC. In the browser, it is window.CCC.
