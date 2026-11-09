@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ElectroMart CCC</title>
+  <meta name="description" content="ElectroMart's cash conversion cycle before and after its working capital changes.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>ElectroMart Cash Conversion Cycle</h1>
+    <p class="lede">How long a dollar is tied up in ElectroMart's operations, before and after the working capital changes, and how much cash each change freed.</p>
+  </header>
+
+  <main>
+    <p id="status" role="status">Loading data…</p>
+
+    <section id="days-section" hidden>
+      <h2>Days</h2>
+      <p class="note">Cash conversion cycle (CCC) = DIO + DSO − DPO. A shorter cycle means each dollar comes back sooner.</p>
+      <table id="days-table">
+        <thead>
+          <tr><th scope="col">Measure</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">Change</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <details>
+        <summary>Show the math</summary>
+        <div id="days-math" class="math"></div>
+      </details>
+    </section>
+
+    <section id="cash-section" hidden>
+      <h2>Cash freed by each lever</h2>
+      <p class="note">Worked out from the balance sheet. A drop in an asset frees cash. A rise in accounts payable frees cash.</p>
+      <table id="cash-table">
+        <thead>
+          <tr><th scope="col">Lever</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">Cash freed</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <h3>Check from days</h3>
+      <p class="note">Days changed × annual COGS (or revenue) / <span id="days-in-year-note"></span> should give the same cash freed.</p>
+      <ul id="cash-check" class="math"></ul>
+      <p id="cash-check-warning" class="warning" hidden></p>
+    </section>
+
+    <section id="inputs-section" hidden>
+      <h2>Inputs</h2>
+      <p class="note">Read from <code>data/electromart.csv</code> and <code>data/assumptions.csv</code>.</p>
+      <table id="inputs-table">
+        <thead>
+          <tr><th scope="col">Line</th><th scope="col">Before</th><th scope="col">After</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p id="assumption-days" class="note"></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Runs entirely in your browser. No data leaves your device.</p>
+  </footer>
+
+  <script src="ccc.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
