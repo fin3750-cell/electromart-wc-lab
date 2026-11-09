@@ -338,3 +338,14 @@ async function main() {
 }
 
 main();
+
+// ---------- Install and offline (progressive web app) ----------
+// Register the service worker in sw.js. The relative path keeps it inside
+// this repository's folder on GitHub Pages.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => {
+      console.warn('The app works, but offline use is off:', err);
+    });
+  });
+}
